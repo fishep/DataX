@@ -1,4 +1,4 @@
-# DataX MysqlWriter
+# DataX HanaWriter
 
 
 ---
@@ -6,21 +6,21 @@
 
 ## 1 快速介绍
 
-MysqlWriter 插件实现了写入数据到 Mysql 主库的目的表的功能。在底层实现上， MysqlWriter 通过 JDBC 连接远程 Mysql 数据库，并执行相应的 insert into ... 或者 ( replace into ...) 的 sql 语句将数据写入 Mysql，内部会分批次提交入库，需要数据库本身采用 InnoDB 引擎。
+HanaWriter 插件实现了写入数据到 Hana 主库的目的表的功能。在底层实现上， HanaWriter 通过 JDBC 连接远程 Hana 数据库，并执行相应的 insert into ... 或者 ( replace into ...) 的 sql 语句将数据写入 Hana，内部会分批次提交入库，需要数据库本身采用 InnoDB 引擎。
 
-MysqlWriter 面向ETL开发工程师，他们使用 MysqlWriter 从数仓导入数据到 Mysql。同时 MysqlWriter 亦可以作为数据迁移工具为DBA等用户提供服务。
+HanaWriter 面向ETL开发工程师，他们使用 HanaWriter 从数仓导入数据到 Hana。同时 HanaWriter 亦可以作为数据迁移工具为DBA等用户提供服务。
 
 
 ## 2 实现原理
 
-MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你配置的 `writeMode` 生成
+HanaWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你配置的 `writeMode` 生成
 
 
 * `insert into...`(当主键/唯一性索引冲突时会写不进去冲突的行)
 
 ##### 或者
 
-* `replace into...`(没有遇到主键/唯一性索引冲突时，与 insert into 行为一致，冲突时会用新行替换原有行所有字段) 的语句写入数据到 Mysql。出于性能考虑，采用了 `PreparedStatement + Batch`，并且设置了：`rewriteBatchedStatements=true`，将数据缓冲到线程上下文 Buffer 中，当 Buffer 累计到预定阈值时，才发起写入请求。
+* `replace into...`(没有遇到主键/唯一性索引冲突时，与 insert into 行为一致，冲突时会用新行替换原有行所有字段) 的语句写入数据到 Hana。出于性能考虑，采用了 `PreparedStatement + Batch`，并且设置了：`rewriteBatchedStatements=true`，将数据缓冲到线程上下文 Buffer 中，当 Buffer 累计到预定阈值时，才发起写入请求。
 
 <br />
 
@@ -31,7 +31,7 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
 
 ### 3.1 配置样例
 
-* 这里使用一份从内存产生到 Mysql 导入的数据。
+* 这里使用一份从内存产生到 Hana 导入的数据。
 
 ```json
 {
@@ -72,7 +72,7 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
                     }
                 },
                 "writer": {
-                    "name": "mysqlwriter",
+                    "name": "hanawriter",
                     "parameter": {
                         "writeMode": "insert",
                         "username": "root",
@@ -89,7 +89,7 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
                         ],
                         "connection": [
                             {
-                                "jdbcUrl": "jdbc:mysql://127.0.0.1:3306/datax?useUnicode=true&characterEncoding=gbk",
+                                "jdbcUrl": "jdbc:hana://127.0.0.1:3306/datax?useUnicode=true&characterEncoding=gbk",
                                 "table": [
                                     "test"
                                 ]
@@ -111,8 +111,8 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
 
 	* 描述：目的数据库的 JDBC 连接信息。作业运行时，DataX 会在你提供的 jdbcUrl 后面追加如下属性：yearIsDateType=false&zeroDateTimeBehavior=convertToNull&rewriteBatchedStatements=true
 
-               注意：1、在一个数据库上只能配置一个 jdbcUrl 值。这与 MysqlReader 支持多个备库探测不同，因为此处不支持同一个数据库存在多个主库的情况(双主导入数据情况)
-                    2、jdbcUrl按照Mysql官方规范，并可以填写连接附加控制信息，比如想指定连接编码为 gbk ，则在 jdbcUrl 后面追加属性 useUnicode=true&characterEncoding=gbk。具体请参看 Mysql官方文档或者咨询对应 DBA。
+               注意：1、在一个数据库上只能配置一个 jdbcUrl 值。这与 HanaReader 支持多个备库探测不同，因为此处不支持同一个数据库存在多个主库的情况(双主导入数据情况)
+                    2、jdbcUrl按照Hana官方规范，并可以填写连接附加控制信息，比如想指定连接编码为 gbk ，则在 jdbcUrl 后面追加属性 useUnicode=true&characterEncoding=gbk。具体请参看 Hana官方文档或者咨询对应 DBA。
 
 
  	* 必选：是 <br />
@@ -147,31 +147,31 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
 
 * **column**
 
-	* 描述：目的表需要写入数据的字段,字段之间用英文逗号分隔。例如: "column": ["id","name","age"]。如果要依次写入全部列，使用`*`表示, 例如: `"column": ["*"]`。
+    * 描述：目的表需要写入数据的字段,字段之间用英文逗号分隔。例如: "column": ["id","name","age"]。如果要依次写入全部列，使用`*`表示, 例如: `"column": ["*"]`。
 
-			**column配置项必须指定，不能留空！**
+            **column配置项必须指定，不能留空！**
 
                注意：1、我们强烈不推荐你这样配置，因为当你目的表字段个数、类型等有改动时，你的任务可能运行不正确或者失败
                     2、 column 不能配置任何常量值
 
-	* 必选：是 <br />
+    * 必选：是 <br />
 
-	* 默认值：否 <br />
+    * 默认值：否 <br />
 
 * **quoteColumnName**
 
-    * 描述：目的表写入数据的字段名, 是否加引号, 为了处理不规范的列名。例如: "column": ["id","_name","comment"] 会变成 "column": ["`id`","`_name`","`comment`"]。
+	* 描述：目的表写入数据的字段名, 是否加引号, 为了处理不规范的列名。例如: "column": ["id","_name","comment"] 会变成 "column": ["`id`","`_name`","`comment`"]。
 
 	           注意：1，配置 "column": ["*"] 的时候会为所有的字段名加上引号
 	                2，如果配置了 quoteColumnName 为 true，就不要在配置column的时候在列名上加引号
 
-    * 必选：否 <br />
+	* 必选：否 <br />
 
-    * 默认值：false <br />
+	* 默认值：false <br />
 
 * **session**
 
-	* 描述: DataX在获取Mysql连接时，执行session指定的SQL语句，修改当前connection session属性
+	* 描述: DataX在获取Hana连接时，执行session指定的SQL语句，修改当前connection session属性
 
 	* 必须: 否
 
@@ -205,7 +205,7 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
 
 * **batchSize**
 
-	* 描述：一次性批量提交的记录数大小，该值可以极大减少DataX与Mysql的网络交互次数，并提升整体吞吐量。但是该值设置过大可能会造成DataX运行进程OOM情况。<br />
+	* 描述：一次性批量提交的记录数大小，该值可以极大减少DataX与Hana的网络交互次数，并提升整体吞吐量。但是该值设置过大可能会造成DataX运行进程OOM情况。<br />
 
 	* 必选：否 <br />
 
@@ -214,12 +214,12 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
 
 ### 3.3 类型转换
 
-类似 MysqlReader ，目前 MysqlWriter 支持大部分 Mysql 类型，但也存在部分个别类型没有支持的情况，请注意检查你的类型。
+类似 HanaReader ，目前 HanaWriter 支持大部分 Hana 类型，但也存在部分个别类型没有支持的情况，请注意检查你的类型。
 
-下面列出 MysqlWriter 针对 Mysql 类型转换列表:
+下面列出 HanaWriter 针对 Hana 类型转换列表:
 
 
-| DataX 内部类型| Mysql 数据类型    |
+| DataX 内部类型| Hana 数据类型    |
 | -------- | -----  |
 | Long     |int, tinyint, smallint, mediumint, int, bigint, year|
 | Double   |float, double, decimal|
@@ -237,7 +237,7 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
 #### 4.1.1 数据特征
 建表语句：
 
-	CREATE TABLE `datax_mysqlwriter_perf_00` (
+	CREATE TABLE `datax_hanawriter_perf_00` (
   	`biz_order_id` bigint(20) NOT NULL AUTO_INCREMENT  COMMENT 'id',
   	`key_value` varchar(4000) NOT NULL COMMENT 'Key-value的内容',
   	`gmt_create` datetime NOT NULL COMMENT '创建时间',
@@ -269,7 +269,7 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
 	3. net: 千兆双网卡
 	4. disc: DataX 数据不落磁盘，不统计此项
 
-* Mysql数据库机器参数为:
+* Hana数据库机器参数为:
 	1. cpu: 32核 Intel(R) Xeon(R) CPU E5-2650 v2 @ 2.60GHz
 	2. mem: 256GB
 	3. net: 千兆双网卡
@@ -355,7 +355,7 @@ MysqlWriter 通过 DataX 框架获取 Reader 生成的协议数据，根据你�
 
 ***
 
-**Q: MysqlWriter 执行 postSql 语句报错，那么数据导入到目标数据库了吗?**
+**Q: HanaWriter 执行 postSql 语句报错，那么数据导入到目标数据库了吗?**
 
 A: DataX 导入过程存在三块逻辑，pre 操作、导入操作、post 操作，其中任意一环报错，DataX 作业报错。由于 DataX 不能保证在同一个事务完成上述几个操作，因此有可能数据已经落入到目标端。
 

@@ -40,6 +40,10 @@ DataX本身作为数据同步框架，将不同数据源的同步抽象为从源
     ``` shell
     $ cd  {DataX_source_code_home}
     $ mvn -U clean package assembly:assembly -Dmaven.test.skip=true
+    $ mvn -U clean package assembly:assembly '-Dmaven.test.skip=true' // powershell
+    $ mvn clean package assembly:assembly '-Dmaven.test.skip=true' // powershell
+    $ mvn clean package '-Dmaven.test.skip=true' // powershell
+    $ mvn assembly:assembly '-Dmaven.test.skip=true' '-Dmaven.package.skip=true' // powershell
     ```
     
     打包成功，日志显示如下：

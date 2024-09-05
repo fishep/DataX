@@ -19,6 +19,8 @@ public final class Key {
     
     public final static String COLUMN_LIST = "columnList";
 
+    public final static String QUOTE_COLUMN_NAME = "quoteColumnName";
+
     public final static String WHERE = "where";
 
     public final static String HINT = "hint";

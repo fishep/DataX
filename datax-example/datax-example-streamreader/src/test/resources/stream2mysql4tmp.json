@@ -1,0 +1,60 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": {
+          "name": "streamreader",
+          "parameter": {
+            "sliceRecordCount": 6,
+            "column": [
+              {
+                "type": "long",
+                "value": "10"
+              },
+              {
+                "type": "string",
+                "value": "hello，你好，世界-DataX"
+              }
+            ]
+          }
+        },
+        "writer": {
+          "name": "mysqlwriter",
+          "parameter": {
+            "writeMode": "update",
+            "username": "demo",
+            "password": "demo",
+            "column": [
+              "id",
+              "comment"
+            ],
+            "session": [
+              "set session sql_mode='ANSI'"
+            ],
+            "preSql": [
+              "TRUNCATE TABLE `tmp_stream`;"
+            ],
+            "postSql": [
+              "RENAME TABLE `tmp_stream` TO `new_stream`;",
+              "RENAME TABLE `stream` TO `tmp_stream`;",
+              "RENAME TABLE `new_stream` TO `stream`;"
+            ],
+            "connection": [
+              {
+                "jdbcUrl": "jdbc:mysql://mysql.dev:3306/demo?useSSL=false",
+                "table": [
+                  "tmp_stream"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "setting": {
+      "speed": {
+        "channel": 5
+      }
+    }
+  }
+}

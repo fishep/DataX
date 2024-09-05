@@ -1,0 +1,40 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": {
+          "name": "hanareader",
+          "parameter": {
+            "username": "READONLY",
+            "password": "",
+            "column": [
+              "*"
+            ],
+            "connection": [
+              {
+                "table": [
+                  "SAPHANADB.MARA"
+                ],
+                "jdbcUrl": [
+                  "jdbc:sap://hana.dev:30641/SAPHANADB?reconnect=true"
+                ]
+              }
+            ]
+          }
+        },
+        "writer": {
+          "name": "streamwriter",
+          "parameter": {
+            "encoding": "UTF-8",
+            "print": true
+          }
+        }
+      }
+    ],
+    "setting": {
+      "speed": {
+        "channel": 1
+      }
+    }
+  }
+}

@@ -1,25 +1,30 @@
-package com.alibaba.datax.plugin.writer.mysqlwriter;
+package com.alibaba.datax.plugin.writer.hanawriter;
 
+import com.alibaba.datax.common.exception.DataXException;
 import com.alibaba.datax.common.plugin.RecordReceiver;
 import com.alibaba.datax.common.spi.Writer;
 import com.alibaba.datax.common.util.Configuration;
+import com.alibaba.datax.plugin.rdbms.util.DBUtilErrorCode;
 import com.alibaba.datax.plugin.rdbms.util.DataBaseType;
 import com.alibaba.datax.plugin.rdbms.writer.CommonRdbmsWriter;
 import com.alibaba.datax.plugin.rdbms.writer.Key;
 
 import java.util.List;
 
-
-//TODO writeProxy
-public class MysqlWriter extends Writer {
-    private static final DataBaseType DATABASE_TYPE = DataBaseType.MySql;
+/**
+ * @Author fly.fei
+ * @Date 2024/8/30 9:50
+ * @Desc
+ **/
+public class HanaWriter extends Writer {
+    private static final DataBaseType DATABASE_TYPE = DataBaseType.HANA;
 
     public static class Job extends Writer.Job {
         private Configuration originalConfig = null;
         private CommonRdbmsWriter.Job commonRdbmsWriterJob;
 
         @Override
-        public void preCheck(){
+        public void preCheck() {
             this.init();
             this.commonRdbmsWriterJob.writerPreCheck(this.originalConfig, DATABASE_TYPE);
         }
@@ -27,14 +32,20 @@ public class MysqlWriter extends Writer {
         @Override
         public void init() {
             this.originalConfig = super.getPluginJobConf();
+
+            // warn：not like mysql, hana only support insert mode, don't use
+            String writeMode = this.originalConfig.getString(Key.WRITE_MODE);
+            if (null != writeMode) {
+                throw DataXException.asDataXException(DBUtilErrorCode.CONF_ERROR, String.format("写入模式(writeMode)配置错误. 因为Hana不支持配置项 writeMode: %s, Hana只能使用insert sql 插入数据. 请检查您的配置并作出修改", writeMode));
+            }
+
             this.commonRdbmsWriterJob = new CommonRdbmsWriter.Job(DATABASE_TYPE);
             this.commonRdbmsWriterJob.init(this.originalConfig);
         }
 
-        // 一般来说，是需要推迟到 task 中进行pre 的执行（单表情况例外）
         @Override
         public void prepare() {
-            //实跑先不支持 权限 检验
+            //hana实跑先不做权限检查
             //this.commonRdbmsWriterJob.privilegeValid(this.originalConfig, DATABASE_TYPE);
             this.commonRdbmsWriterJob.prepare(this.originalConfig);
         }
@@ -44,7 +55,6 @@ public class MysqlWriter extends Writer {
             return this.commonRdbmsWriterJob.split(this.originalConfig, mandatoryNumber);
         }
 
-        // 一般来说，是需要推迟到 task 中进行post 的执行（单表情况例外）
         @Override
         public void post() {
             this.commonRdbmsWriterJob.post(this.originalConfig);
@@ -73,11 +83,9 @@ public class MysqlWriter extends Writer {
             this.commonRdbmsWriterTask.prepare(this.writerSliceConfig);
         }
 
-        //TODO 改用连接池，确保每次获取的连接都是可用的（注意：连接可能需要每次都初始化其 session）
         @Override
         public void startWrite(RecordReceiver recordReceiver) {
-            this.commonRdbmsWriterTask.startWrite(recordReceiver, this.writerSliceConfig,
-                    super.getTaskPluginCollector());
+            this.commonRdbmsWriterTask.startWrite(recordReceiver, this.writerSliceConfig, super.getTaskPluginCollector());
         }
 
         @Override
@@ -90,13 +98,6 @@ public class MysqlWriter extends Writer {
             this.commonRdbmsWriterTask.destroy(this.writerSliceConfig);
         }
 
-        @Override
-        public boolean supportFailOver(){
-            String writeMode = writerSliceConfig.getString(Key.WRITE_MODE);
-            return "replace".equalsIgnoreCase(writeMode);
-        }
-
     }
-
 
 }

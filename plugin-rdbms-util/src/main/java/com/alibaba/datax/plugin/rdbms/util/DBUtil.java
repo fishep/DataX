@@ -18,6 +18,8 @@ import java.io.File;
 import java.sql.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public final class DBUtil {
     private static final Logger LOG = LoggerFactory.getLogger(DBUtil.class);
@@ -508,7 +510,7 @@ public final class DBUtil {
         return getTableColumnsByConn(dataBaseType, conn, tableName, "jdbcUrl:"+jdbcUrl);
     }
 
-    public static List<String> getTableColumnsByConn(DataBaseType dataBaseType, Connection conn, String tableName, String basicMsg) {
+    public static List<String> getTableColumnsByConn(DataBaseType dataBaseType, Connection conn, String tableName, String basicMsg, Function<String, String> dealColumn) {
         List<String> columns = new ArrayList<String>();
         Statement statement = null;
         ResultSet rs = null;
@@ -520,9 +522,8 @@ public final class DBUtil {
             rs = statement.executeQuery(queryColumnSql);
             ResultSetMetaData rsMetaData = rs.getMetaData();
             for (int i = 0, len = rsMetaData.getColumnCount(); i < len; i++) {
-                columns.add(rsMetaData.getColumnName(i + 1));
+                columns.add(dealColumn.apply(rsMetaData.getColumnName(i + 1)));
             }
-
         } catch (SQLException e) {
             throw RdbmsException.asQueryException(dataBaseType,e,queryColumnSql,tableName,null);
         } finally {
@@ -530,6 +531,14 @@ public final class DBUtil {
         }
 
         return columns;
+    }
+
+    public static List<String> getTableColumnsByConn(DataBaseType dataBaseType, Connection conn, String tableName, String basicMsg) {
+        return getTableColumnsByConn(dataBaseType, conn, tableName, basicMsg, columnName -> columnName);
+    }
+
+    public static List<String> getTableQuoteColumnsByConn(DataBaseType dataBaseType, Connection conn, String tableName, String basicMsg) {
+        return getTableColumnsByConn(dataBaseType, conn, tableName, basicMsg, dataBaseType::quoteColumnName);
     }
 
     /**

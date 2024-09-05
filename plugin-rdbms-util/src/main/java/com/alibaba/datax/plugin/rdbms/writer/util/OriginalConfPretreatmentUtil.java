@@ -99,11 +99,21 @@ public final class OriginalConfPretreatmentUtil {
                     "您的配置文件中的列配置信息有误. 因为您未配置写入数据库表的列名称，DataX获取不到列信息. 请检查您的配置并作出修改.");
         } else {
             boolean isPreCheck = originalConfig.getBool(Key.DRYRUN, false);
+            boolean isQuote = originalConfig.getBool(Key.QUOTE_COLUMN_NAME, false);
+
             List<String> allColumns;
-            if (isPreCheck){
-                allColumns = DBUtil.getTableColumnsByConn(DATABASE_TYPE,connectionFactory.getConnecttionWithoutRetry(), oneTable, connectionFactory.getConnectionInfo());
-            }else{
-                allColumns = DBUtil.getTableColumnsByConn(DATABASE_TYPE,connectionFactory.getConnecttion(), oneTable, connectionFactory.getConnectionInfo());
+            if (isPreCheck) {
+                if (isQuote) {
+                    allColumns = DBUtil.getTableQuoteColumnsByConn(DATABASE_TYPE, connectionFactory.getConnecttionWithoutRetry(), oneTable, connectionFactory.getConnectionInfo());
+                } else {
+                    allColumns = DBUtil.getTableColumnsByConn(DATABASE_TYPE, connectionFactory.getConnecttionWithoutRetry(), oneTable, connectionFactory.getConnectionInfo());
+                }
+            } else {
+                if (isQuote) {
+                    allColumns = DBUtil.getTableQuoteColumnsByConn(DATABASE_TYPE, connectionFactory.getConnecttion(), oneTable, connectionFactory.getConnectionInfo());
+                } else {
+                    allColumns = DBUtil.getTableColumnsByConn(DATABASE_TYPE, connectionFactory.getConnecttion(), oneTable, connectionFactory.getConnectionInfo());
+                }
             }
 
             LOG.info("table:[{}] all columns:[\n{}\n].", oneTable,
@@ -125,7 +135,16 @@ public final class OriginalConfPretreatmentUtil {
                 try {
                     connection = connectionFactory.getConnecttion();
                     // 检查列是否都为数据库表中正确的列（通过执行一次 select column from table 进行判断）
-                    DBUtil.getColumnMetaData(connection, oneTable,StringUtils.join(userConfiguredColumns, ","));
+
+                    if (isQuote) {
+                        for (int i = 0; i < userConfiguredColumns.size(); i++) {
+                            userConfiguredColumns.set(i, DATABASE_TYPE.quoteColumnName(userConfiguredColumns.get(i)));
+                        }
+
+                        originalConfig.set(Key.COLUMN, userConfiguredColumns);
+                    }
+
+                    DBUtil.getColumnMetaData(connection, oneTable, StringUtils.join(userConfiguredColumns, ","));
                 } finally {
                     DBUtil.closeDBResources(null, connection);
                 }
@@ -167,7 +186,7 @@ public final class OriginalConfPretreatmentUtil {
             forceUseUpdate = true;
         }
 
-        String writeDataSqlTemplate = WriterUtil.getWriteTemplate(columns, valueHolders, writeMode,dataBaseType, forceUseUpdate);
+        String writeDataSqlTemplate = WriterUtil.getWriteTemplate(columns, valueHolders, writeMode, dataBaseType, forceUseUpdate);
 
         LOG.info("Write data [\n{}\n], which jdbcUrl like:[{}]", writeDataSqlTemplate, jdbcUrl);
 

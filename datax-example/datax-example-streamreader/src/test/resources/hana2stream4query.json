@@ -1,0 +1,37 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": {
+          "name": "hanareader",
+          "parameter": {
+            "username": "READONLY",
+            "password": "",
+            "connection": [
+              {
+                "querySql": [
+                  "SELECT MANDT, MATNR FROM SAPHANADB.MARA WHERE MATNR = '700059' AND MANDT = '120';"
+                ],
+                "jdbcUrl": [
+                  "jdbc:sap://hana.dev:30641?reconnect=true"
+                ]
+              }
+            ]
+          }
+        },
+        "writer": {
+          "name": "streamwriter",
+          "parameter": {
+            "encoding": "UTF-8",
+            "print": true
+          }
+        }
+      }
+    ],
+    "setting": {
+      "speed": {
+        "channel": 5
+      }
+    }
+  }
+}

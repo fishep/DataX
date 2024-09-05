@@ -1,0 +1,59 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": {
+          "name": "hanareader",
+          "parameter": {
+            "username": "READONLY",
+            "password": "",
+            "column": [
+              "*"
+            ],
+            "connection": [
+              {
+                "table": [
+                  "SAPHANADB.MARA"
+                ],
+                "jdbcUrl": [
+                  "jdbc:sap://hana.dev:30641/SAPHANADB?reconnect=true"
+                ]
+              }
+            ]
+          }
+        },
+        "writer": {
+          "name": "mysqlwriter",
+          "parameter": {
+            "writeMode": "insert",
+            "username": "demo",
+            "password": "demo",
+            "column": [
+              "*"
+            ],
+            "quoteColumnName": "true",
+            "session": [
+              "set session sql_mode='ANSI'"
+            ],
+            "preSql": [
+              "TRUNCATE TABLE `MARA`;"
+            ],
+            "connection": [
+              {
+                "jdbcUrl": "jdbc:mysql://mysql.dev:3306/demo?useSSL=false",
+                "table": [
+                  "MARA"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "setting": {
+      "speed": {
+        "channel": 1
+      }
+    }
+  }
+}

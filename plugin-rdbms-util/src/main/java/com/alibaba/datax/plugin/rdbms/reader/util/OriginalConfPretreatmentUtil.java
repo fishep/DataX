@@ -35,10 +35,10 @@ public final class OriginalConfPretreatmentUtil {
 
     public static void dealWhere(Configuration originalConfig) {
         String where = originalConfig.getString(Key.WHERE, null);
-        if(StringUtils.isNotBlank(where)) {
+        if (StringUtils.isNotBlank(where)) {
             String whereImprove = where.trim();
-            if(whereImprove.endsWith(";") || whereImprove.endsWith("；")) {
-                whereImprove = whereImprove.substring(0,whereImprove.length()-1);
+            if (whereImprove.endsWith(";") || whereImprove.endsWith("；")) {
+                whereImprove = whereImprove.substring(0, whereImprove.length() - 1);
             }
             originalConfig.set(Key.WHERE, whereImprove);
         }
@@ -66,7 +66,7 @@ public final class OriginalConfPretreatmentUtil {
         String password = originalConfig.getString(Key.PASSWORD);
         boolean checkSlave = originalConfig.getBool(Key.CHECK_SLAVE, false);
         boolean isTableMode = originalConfig.getBool(Constant.IS_TABLE_MODE);
-        boolean isPreCheck = originalConfig.getBool(Key.DRYRUN,false);
+        boolean isPreCheck = originalConfig.getBool(Key.DRYRUN, false);
 
         List<Object> conns = originalConfig.getList(Constant.CONN_MARK,
                 Object.class);
@@ -99,7 +99,7 @@ public final class OriginalConfPretreatmentUtil {
             originalConfig.set(String.format("%s[%d].%s", Constant.CONN_MARK,
                     i, Key.JDBC_URL), jdbcUrl);
 
-            LOG.info("Available jdbcUrl:{}.",jdbcUrl);
+            LOG.info("Available jdbcUrl:{}.", jdbcUrl);
 
             if (isTableMode) {
                 // table 方式
@@ -165,6 +165,8 @@ public final class OriginalConfPretreatmentUtil {
                     allColumns = ListUtil.valueToLowerCase(allColumns);
                     List<String> quotedColumns = new ArrayList<String>();
 
+                    boolean isQuote = originalConfig.getBool(Key.QUOTE_COLUMN_NAME, false);
+
                     for (String column : userConfiguredColumns) {
                         if ("*".equals(column)) {
                             throw DataXException.asDataXException(
@@ -172,7 +174,12 @@ public final class OriginalConfPretreatmentUtil {
                                     "您的配置文件中的列配置信息有误. 因为根据您的配置，数据库表的列中存在多个*. 请检查您的配置并作出修改. ");
                         }
 
-                        quotedColumns.add(column);
+                        if (isQuote) {
+                            quotedColumns.add(DATABASE_TYPE.quoteColumnName(column));
+                        } else {
+                            quotedColumns.add(column);
+                        }
+
                         //以下判断没有任何意义
 //                        if (null == column) {
 //                            quotedColumns.add(null);

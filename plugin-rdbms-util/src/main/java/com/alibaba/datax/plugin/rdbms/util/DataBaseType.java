@@ -28,7 +28,8 @@ public enum DataBaseType {
     Sybase("sybase", "com.sybase.jdbc4.jdbc.SybDriver"),
     GaussDB("gaussdb", "org.opengauss.Driver"),
     Databend("databend", "com.databend.jdbc.DatabendDriver"),
-    Doris("doris","com.mysql.jdbc.Driver");
+    Doris("doris","com.mysql.jdbc.Driver"),
+    HANA("hana", "com.sap.db.jdbc.Driver");
 
     private String typeName;
     private String driverClassName;
@@ -77,6 +78,8 @@ public enum DataBaseType {
             case GaussDB:
                 break;
             case Doris:
+                break;
+            case HANA:
                 break;
             default:
                 throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, "unsupported database type.");
@@ -143,6 +146,8 @@ public enum DataBaseType {
                 break;
             case GaussDB:
                 break;
+            case HANA:
+                break;
             default:
                 throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, "unsupported database type.");
         }
@@ -172,6 +177,11 @@ public enum DataBaseType {
                 break;
             case GaussDB:
                 break;
+            case HANA:
+                if (splitPk.length() >= 2 && splitPk.startsWith("\"") && splitPk.endsWith("\"")) {
+                    result = splitPk.substring(1, splitPk.length() - 1);
+                }
+                break;
             default:
                 throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, "unsupported database type.");
         }
@@ -198,6 +208,9 @@ public enum DataBaseType {
             case Oscar:
                 break;
             case GaussDB:
+                break;
+            case HANA:
+                result = "\"" + columnName + "\"";
                 break;
             default:
                 throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, "unsupported database type");
@@ -226,6 +239,9 @@ public enum DataBaseType {
             case Oscar:
                 break;
             case GaussDB:
+                break;
+            case HANA:
+                result = "\"" + tableName + "\"";
                 break;
             default:
                 throw DataXException.asDataXException(DBUtilErrorCode.UNSUPPORTED_TYPE, "unsupported database type");

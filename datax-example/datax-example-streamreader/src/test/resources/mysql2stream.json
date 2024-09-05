@@ -1,0 +1,42 @@
+{
+  "job": {
+    "content": [
+      {
+        "reader": {
+          "name": "mysqlreader",
+          "parameter": {
+            "username": "demo",
+            "password": "demo",
+            "column": [
+              "id",
+              "comment"
+            ],
+            "splitPk": "id",
+            "connection": [
+              {
+                "table": [
+                  "stream"
+                ],
+                "jdbcUrl": [
+                  "jdbc:mysql://mysql.dev:3306/demo?useSSL=false"
+                ]
+              }
+            ]
+          }
+        },
+        "writer": {
+          "name": "streamwriter",
+          "parameter": {
+            "encoding": "UTF-8",
+            "print": true
+          }
+        }
+      }
+    ],
+    "setting": {
+      "speed": {
+        "channel": 5
+      }
+    }
+  }
+}
